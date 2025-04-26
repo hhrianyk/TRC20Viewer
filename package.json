@@ -1,0 +1,44 @@
+{
+  "name": "cross-platform-trc20-viewer",
+  "version": "1.0.0",
+  "description": "Кроссплатформенное приложение для просмотра TRC20 токенов (Web, Android, iOS)",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "eject": "expo eject"
+  },
+  "keywords": [
+    "tron",
+    "trc20",
+    "trust-wallet",
+    "token",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.18.2",
+    "cors": "^2.8.5",
+    "ethers": "^5.7.2",
+    "expo": "^48.0.0",
+    "expo-status-bar": "~1.4.4",
+    "express": "^5.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.71.8",
+    "react-native-web": "~0.18.10"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.0.14",
+    "babel-preset-expo": "^9.3.0",
+    "typescript": "^4.9.4"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "private": true
+}

@@ -1,0 +1,143 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 800px;
+    margin-top: 50px;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #6c5ce7;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.btn-primary {
+    background-color: #6c5ce7;
+    border-color: #6c5ce7;
+}
+
+.btn-primary:hover {
+    background-color: #5649c0;
+    border-color: #5649c0;
+}
+
+.copy-link {
+    cursor: pointer;
+}
+
+#qrcode {
+    text-align: center;
+    margin: a5px 0;
+}
+
+.status-indicator {
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-disconnected {
+    background-color: #ff6b6b;
+}
+
+.status-connected {
+    background-color: #51cf66;
+}
+
+.alert-info {
+    background-color: #e0f7fa;
+    border-color: #b2ebf2;
+    color: #0277bd;
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    border-color: #c8e6c9;
+    color: #2e7d32;
+}
+
+.alert-warning {
+    background-color: #fff8e1;
+    border-color: #ffecb3;
+    color: #ff8f00;
+}
+
+.alert-danger {
+    background-color: #ffebee;
+    border-color: #ffcdd2;
+    color: #c62828;
+}
+
+@media (max-width: 768px) {
+    .container {
+        margin-top: 20px;
+    }
+    
+    .col-md-4 {
+        margin-bottom: 15px;
+    }
+}
+
+/* Trust Wallet theme colors */
+.trust-wallet-theme .card-header {
+    background-color: #3375BB;
+}
+
+.trust-wallet-theme .btn-primary {
+    background-color: #3375BB;
+    border-color: #3375BB;
+}
+
+.trust-wallet-theme .btn-primary:hover {
+    background-color: #2d68a5;
+    border-color: #2d68a5;
+}
+
+/* Animation for loading states */
+.loading {
+    position: relative;
+}
+
+.loading:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading:before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    top: calc(50% - 15px);
+    left: calc(50% - 15px);
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #6c5ce7;
+    border-radius: 50%;
+    z-index: 1;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 

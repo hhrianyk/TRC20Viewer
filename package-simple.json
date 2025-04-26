@@ -1,0 +1,25 @@
+{
+  "name": "trc20-viewer",
+  "version": "1.0.0",
+  "description": "Локальный инструмент для исследования отображения TRC20 токенов",
+  "main": "simple-server.js",
+  "scripts": {
+    "start": "node simple-server.js",
+    "dev": "nodemon simple-server.js"
+  },
+  "keywords": [
+    "tron",
+    "trc20",
+    "trust-wallet",
+    "token"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+} 

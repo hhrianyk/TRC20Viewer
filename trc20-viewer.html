@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRC20 Token Viewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #0052cc;
+            color: white;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #0052cc;
+            border-color: #0052cc;
+        }
+        .btn-primary:hover {
+            background-color: #003d99;
+            border-color: #003d99;
+        }
+        .decimals-badge {
+            font-size: 14px;
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .decimals-badge.active {
+            background-color: #0052cc;
+            color: white;
+        }
+        #qrcode {
+            text-align: center;
+            margin: 15px 0;
+        }
+        .token-info {
+            border-left: 4px solid #0052cc;
+            padding-left: 10px;
+            margin-bottom: 10px;
+        }
+        #tokenPreview {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mb-4">TRC20 Token Trust Wallet Viewer</h2>
+        <p class="text-center text-muted mb-4">Локальный инструмент для исследования отображения TRC20 токенов с разными значениями decimals в Trust Wallet</p>
+        
+        <!-- Токен для тестирования -->
+        <div class="card mb-4">
+            <div class="card-header">Выбор токена для тестирования</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="tokenAddress" class="form-label">Адрес TRC20 токена</label>
+                    <input type="text" class="form-control" id="tokenAddress" placeholder="Введите адрес TRC20 токена">
+                </div>
+                
+                <div class="d-grid">
+                    <button class="btn btn-primary" id="loadTokenBtn">Загрузить информацию о токене</button>
+                </div>
+                
+                <div id="tokenInfo" class="mt-3" style="display: none;">
+                    <div class="token-info p-3">
+                        <h5>Информация о токене</h5>
+                        <p><strong>Название:</strong> <span id="tokenName">-</span></p>
+                        <p><strong>Символ:</strong> <span id="tokenSymbol">-</span></p>
+                        <p><strong>Decimals:</strong> <span id="tokenDecimals">-</span></p>
+                        <p><strong>Общее предложение:</strong> <span id="tokenSupply">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Тестовые параметры -->
+        <div class="card mb-4" id="testParamsCard" style="display: none;">
+            <div class="card-header">Параметры тестирования</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Тестовое значение decimals (для визуализации)</label>
+                    <div class="d-flex flex-wrap mb-2">
+                        <span class="badge bg-light text-dark decimals-badge" data-value="0">0</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="6">6</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="8">8</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="9">9</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="12">12</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="18">18</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="24">24</span>
+                        <span class="badge bg-light text-dark decimals-badge" data-value="30">30</span>
+                    </div>
+                    <input type="range" class="form-range" id="decimalsSlider" min="0" max="30" value="6">
+                    <div class="d-flex justify-content-between">
+                        <span>0</span>
+                        <span>6</span>
+                        <span>18</span>
+                        <span>30</span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="testAmount" class="form-label">Тестовая сумма токенов (для визуализации)</label>
+                    <input type="number" class="form-control" id="testAmount" value="1000" step="0.01">
+                </div>
+                
+                <div id="tokenPreview" class="mb-3">
+                    <h6>Предварительный просмотр отображения</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Исходное отображение (decimals: <span id="originalDecimals">-</span>):</strong></p>
+                            <p id="originalAmount" class="fs-5">-</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Тестовое отображение (decimals: <span id="testDecimals">-</span>):</strong></p>
+                            <p id="testAmountDisplay" class="fs-5">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid">
+                    <button class="btn btn-primary" id="generateLinkBtn">Сгенерировать тестовую ссылку для Trust Wallet</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Тестовая ссылка -->
+        <div class="card mb-4" id="testLinkCard" style="display: none;">
+            <div class="card-header">Тестовая ссылка для Trust Wallet</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Ссылка для открытия в Trust Wallet</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="trustWalletLink" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyLinkBtn">Копировать</button>
+                    </div>
+                </div>
+                
+                <div id="qrcode" class="text-center mb-3"></div>
+                
+                <div class="alert alert-info">
+                    <h6>Инструкция:</h6>
+                    <ol>
+                        <li>Откройте эту ссылку на устройстве с установленным Trust Wallet</li>
+                        <li>Наблюдайте, как отображается токен с указанными параметрами</li>
+                        <li>Запишите результаты наблюдений ниже</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Результаты тестирования -->
+        <div class="card mb-4" id="testResultsCard" style="display: none;">
+            <div class="card-header">Результаты тестирования</div>
+            <div class="card-body">
+                <form id="resultsForm">
+                    <div class="mb-3">
+                        <label class="form-label">Правильность отображения</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="displayResult" id="displayCorrect" value="correct">
+                            <label class="form-check-label" for="displayCorrect">
+                                Отображается корректно
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="displayResult" id="displayIncorrect" value="incorrect">
+                            <label class="form-check-label" for="displayIncorrect">
+                                Отображается некорректно
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="resultNotes" class="form-label">Заметки и наблюдения</label>
+                        <textarea class="form-control" id="resultNotes" rows="3" placeholder="Опишите, как отображается токен в Trust Wallet"></textarea>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" id="saveResultBtn">Сохранить результат</button>
+                </form>
+                
+                <hr>
+                
+                <h5>Сохраненные результаты</h5>
+                <div id="savedResults">
+                    <!-- Здесь будут сохраненные результаты -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode.js/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tronweb@5.1.0/dist/TronWeb.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const tokenAddress = document.getElementById('tokenAddress');
+            const loadTokenBtn = document.getElementById('loadTokenBtn');
+            const tokenInfo = document.getElementById('tokenInfo');
+            const tokenName = document.getElementById('tokenName');
+            const tokenSymbol = document.getElementById('tokenSymbol');
+            const tokenDecimals = document.getElementById('tokenDecimals');
+            const tokenSupply = document.getElementById('tokenSupply');
+            const testParamsCard = document.getElementById('testParamsCard');
+            const decimalsSlider = document.getElementById('decimalsSlider');
+            const decimalsBadges = document.querySelectorAll('.decimals-badge');
+            const testAmount = document.getElementById('testAmount');
+            const originalDecimals = document.getElementById('originalDecimals');
+            const testDecimals = document.getElementById('testDecimals');
+            const originalAmount = document.getElementById('originalAmount');
+            const testAmountDisplay = document.getElementById('testAmountDisplay');
+            const generateLinkBtn = document.getElementById('generateLinkBtn');
+            const testLinkCard = document.getElementById('testLinkCard');
+            const trustWalletLink = document.getElementById('trustWalletLink');
+            const copyLinkBtn = document.getElementById('copyLinkBtn');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const testResultsCard = document.getElementById('testResultsCard');
+            const saveResultBtn = document.getElementById('saveResultBtn');
+            const resultNotes = document.getElementById('resultNotes');
+            const savedResults = document.getElementById('savedResults');
+            
+            // Global variables
+            let tronWeb = null;
+            let currentTokenData = null;
+            let savedTestResults = JSON.parse(localStorage.getItem('trc20TestResults')) || {};
+            
+            // Initialize TronWeb via TronLink if available
+            if (window.tronWeb && window.tronWeb.ready) {
+                tronWeb = window.tronWeb;
+            } else {
+                // Fallback to public API
+                tronWeb = new TronWeb({
+                    fullHost: 'https://api.trongrid.io'
+                });
+            }
+            
+            // Event listeners
+            loadTokenBtn.addEventListener('click', loadTokenInfo);
+            decimalsSlider.addEventListener('input', updateDecimalsDisplay);
+            decimalsBadges.forEach(badge => {
+                badge.addEventListener('click', setDecimalsValue);
+            });
+            testAmount.addEventListener('input', updateAmountDisplay);
+            generateLinkBtn.addEventListener('click', generateTrustWalletLink);
+            copyLinkBtn.addEventListener('click', copyToClipboard);
+            saveResultBtn.addEventListener('click', saveTestResult);
+            
+            // Initialize
+            displaySavedResults();
+            
+            // Functions
+            async function loadTokenInfo() {
+                const address = tokenAddress.value.trim();
+                
+                if (!address) {
+                    alert('Пожалуйста, введите адрес токена');
+                    return;
+                }
+                
+                try {
+                    loadTokenBtn.disabled = true;
+                    loadTokenBtn.textContent = 'Загрузка...';
+                    
+                    // Get token contract
+                    const contract = await tronWeb.contract().at(address);
+                    
+                    // Get token info
+                    const name = await contract.name().call();
+                    const symbol = await contract.symbol().call();
+                    const decimals = await contract.decimals().call();
+                    const supply = await contract.totalSupply().call();
+                    
+                    // Format supply
+                    const formattedSupply = supply / (10 ** decimals);
+                    
+                    // Update UI
+                    tokenName.textContent = name;
+                    tokenSymbol.textContent = symbol;
+                    tokenDecimals.textContent = decimals;
+                    tokenSupply.textContent = formattedSupply.toLocaleString() + ' ' + symbol;
+                    
+                    // Show token info
+                    tokenInfo.style.display = 'block';
+                    testParamsCard.style.display = 'block';
+                    
+                    // Set decimals slider to match token
+                    decimalsSlider.value = decimals;
+                    updateDecimalsDisplay();
+                    
+                    // Store token data
+                    currentTokenData = {
+                        address: address,
+                        name: name,
+                        symbol: symbol,
+                        decimals: decimals,
+                        supply: supply
+                    };
+                    
+                    // Update displays
+                    updateAmountDisplay();
+                    
+                    loadTokenBtn.disabled = false;
+                    loadTokenBtn.textContent = 'Загрузить информацию о токене';
+                    
+                    testResultsCard.style.display = 'block';
+                } catch (error) {
+                    console.error('Error loading token info:', error);
+                    alert('Ошибка загрузки информации о токене. Убедитесь, что адрес верный и это TRC20 токен.');
+                    loadTokenBtn.disabled = false;
+                    loadTokenBtn.textContent = 'Загрузить информацию о токене';
+                }
+            }
+            
+            function updateDecimalsDisplay() {
+                testDecimals.textContent = decimalsSlider.value;
+                
+                // Update badge active state
+                decimalsBadges.forEach(badge => {
+                    if (parseInt(badge.dataset.value) === parseInt(decimalsSlider.value)) {
+                        badge.classList.add('active');
+                        badge.classList.remove('bg-light', 'text-dark');
+                        badge.classList.add('bg-primary');
+                    } else {
+                        badge.classList.remove('active', 'bg-primary');
+                        badge.classList.add('bg-light', 'text-dark');
+                    }
+                });
+                
+                updateAmountDisplay();
+            }
+            
+            function setDecimalsValue(e) {
+                const value = e.target.dataset.value;
+                decimalsSlider.value = value;
+                updateDecimalsDisplay();
+            }
+            
+            function updateAmountDisplay() {
+                if (!currentTokenData) return;
+                
+                const amount = parseFloat(testAmount.value);
+                const origDecimalsVal = parseInt(currentTokenData.decimals);
+                const testDecimalsVal = parseInt(decimalsSlider.value);
+                
+                originalDecimals.textContent = origDecimalsVal;
+                
+                // Format using original decimals
+                originalAmount.textContent = formatTokenAmount(amount, origDecimalsVal) + ' ' + currentTokenData.symbol;
+                
+                // Format using test decimals
+                testAmountDisplay.textContent = formatTokenAmount(amount, testDecimalsVal) + ' ' + currentTokenData.symbol;
+            }
+            
+            // Добавляем функцию безопасного форматирования
+            function formatTokenAmount(amount, decimals) {
+                if (isNaN(amount)) return '0';
+                
+                // Ограничиваем максимальное значение decimals до 18 для совместимости
+                const safeDecimals = Math.min(decimals, 18);
+                
+                try {
+                    // Используем toLocaleString для правильного форматирования чисел
+                    return amount.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: safeDecimals
+                    });
+                } catch (error) {
+                    console.error('Error formatting amount:', error);
+                    // Fallback вариант форматирования
+                    return amount.toString();
+                }
+            }
+            
+            function generateTrustWalletLink() {
+                if (!currentTokenData) {
+                    alert('Сначала загрузите информацию о токене');
+                    return;
+                }
+                
+                const testDecimalsVal = parseInt(decimalsSlider.value);
+                
+                // Проверка на ограничение decimals для совместимости
+                if (testDecimalsVal > 18) {
+                    const warning = document.createElement('div');
+                    warning.className = 'alert alert-warning mt-3';
+                    warning.innerHTML = '<strong>Внимание!</strong> Значения decimals > 18 могут некорректно отображаться в некоторых версиях Trust Wallet. Рекомендуется использовать значения ≤ 18.';
+                    
+                    // Показываем предупреждение только если его еще нет
+                    if (!document.querySelector('.alert-warning')) {
+                        trustWalletLink.parentElement.parentElement.appendChild(warning);
+                    }
+                }
+                
+                // Create three different link formats for testing
+                
+                // 1. TrustWallet add_asset deep link
+                const trustWalletAddLink = `https://link.trustwallet.com/add_asset?asset=c195_t${currentTokenData.address}&name=${encodeURIComponent(currentTokenData.name)}&symbol=${encodeURIComponent(currentTokenData.symbol)}&decimals=${testDecimalsVal}`;
+                
+                // 2. TrustWallet open_url to TronScan deep link
+                const tronScanUrl = `https://tronscan.org/#/token20/${currentTokenData.address}`;
+                const trustWalletScanLink = `https://link.trustwallet.com/open_url?url=${encodeURIComponent(tronScanUrl)}`;
+                
+                // 3. Browser deep link (to open in TrustWallet browser)
+                // Create a simple data page with token parameters
+                const dataPageContent = `
+                    <html>
+                        <head>
+                            <title>${currentTokenData.name} (${currentTokenData.symbol})</title>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body { font-family: sans-serif; padding: 20px; }
+                                .token-info { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="token-info">
+                                <h2>${currentTokenData.name} (${currentTokenData.symbol})</h2>
+                                <p><strong>Адрес:</strong> ${currentTokenData.address}</p>
+                                <p><strong>Decimals:</strong> ${testDecimalsVal}</p>
+                                <p><strong>Исходный Decimals:</strong> ${currentTokenData.decimals}</p>
+                                <hr>
+                                <p>Это тестовая страница для проверки отображения токена.</p>
+                            </div>
+                        </body>
+                    </html>
+                `;
+                
+                // Encode this content for use in a data URL
+                const dataUrl = `data:text/html;base64,${btoa(dataPageContent)}`;
+                const trustWalletBrowserLink = `https://link.trustwallet.com/browser?url=${encodeURIComponent(dataUrl)}`;
+                
+                // Choose the most appropriate link for our purpose
+                // The add_asset link is most likely to demonstrate decimals rendering
+                const deepLink = trustWalletAddLink;
+                
+                // Update UI
+                trustWalletLink.value = deepLink;
+                
+                // Create buttons for alternative links
+                const linkAlternatives = document.createElement('div');
+                linkAlternatives.className = 'mt-3';
+                linkAlternatives.innerHTML = `
+                    <label class="form-label">Альтернативные форматы ссылок:</label>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm copy-alt-link" data-link="${trustWalletAddLink}">
+                            Скопировать ссылку для добавления токена
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm copy-alt-link" data-link="${trustWalletScanLink}">
+                            Скопировать ссылку для просмотра в TronScan
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm copy-alt-link" data-link="${trustWalletBrowserLink}">
+                            Скопировать ссылку для браузера Trust Wallet
+                        </button>
+                    </div>
+                `;
+                
+                // Add alternative links after the main link input
+                const linkGroupDiv = trustWalletLink.closest('.mb-3');
+                if (linkGroupDiv.querySelector('.alt-links')) {
+                    linkGroupDiv.querySelector('.alt-links').remove();
+                }
+                linkAlternatives.classList.add('alt-links');
+                linkGroupDiv.appendChild(linkAlternatives);
+                
+                // Add event listeners to alternative link buttons
+                document.querySelectorAll('.copy-alt-link').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const linkText = this.dataset.link;
+                        const tempInput = document.createElement('input');
+                        tempInput.value = linkText;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        
+                        const originalText = this.textContent;
+                        this.textContent = 'Скопировано!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 2000);
+                    });
+                });
+                
+                // Generate QR code
+                qrcodeDiv.innerHTML = '';
+                new QRCode(qrcodeDiv, {
+                    text: deepLink,
+                    width: 128,
+                    height: 128
+                });
+                
+                // Show the link card
+                testLinkCard.style.display = 'block';
+                
+                // Scroll to link card
+                testLinkCard.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            function copyToClipboard() {
+                trustWalletLink.select();
+                document.execCommand('copy');
+                
+                const originalText = copyLinkBtn.textContent;
+                copyLinkBtn.textContent = 'Скопировано!';
+                setTimeout(() => {
+                    copyLinkBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            function saveTestResult() {
+                if (!currentTokenData) {
+                    alert('Сначала загрузите информацию о токене');
+                    return;
+                }
+                
+                const displayResult = document.querySelector('input[name="displayResult"]:checked');
+                if (!displayResult) {
+                    alert('Пожалуйста, выберите правильность отображения');
+                    return;
+                }
+                
+                const notes = resultNotes.value.trim();
+                if (!notes) {
+                    alert('Пожалуйста, добавьте заметки о наблюдениях');
+                    return;
+                }
+                
+                const testDecimalsVal = parseInt(decimalsSlider.value);
+                const result = {
+                    token: {
+                        address: currentTokenData.address,
+                        name: currentTokenData.name,
+                        symbol: currentTokenData.symbol,
+                        originalDecimals: parseInt(currentTokenData.decimals)
+                    },
+                    test: {
+                        testDecimals: testDecimalsVal,
+                        displayResult: displayResult.value,
+                        notes: notes,
+                        timestamp: new Date().toISOString(),
+                        device: navigator.userAgent
+                    }
+                };
+                
+                // Сохраняем результат
+                const tokenKey = currentTokenData.address;
+                if (!savedTestResults[tokenKey]) {
+                    savedTestResults[tokenKey] = [];
+                }
+                savedTestResults[tokenKey].push(result);
+                localStorage.setItem('trc20TestResults', JSON.stringify(savedTestResults));
+                
+                // Очищаем форму
+                document.querySelector('input[name="displayResult"]:checked').checked = false;
+                resultNotes.value = '';
+                
+                // Обновляем отображение сохраненных результатов
+                displaySavedResults();
+                
+                alert('Результат тестирования сохранен!');
+            }
+            
+            function displaySavedResults() {
+                savedResults.innerHTML = '';
+                
+                // Проверяем, есть ли сохраненные результаты
+                const hasResults = Object.keys(savedTestResults).length > 0;
+                if (!hasResults) {
+                    savedResults.innerHTML = '<p class="text-muted">Нет сохраненных результатов</p>';
+                    return;
+                }
+                
+                // Перебираем все токены с сохраненными результатами
+                for (const tokenAddress in savedTestResults) {
+                    const tokenResults = savedTestResults[tokenAddress];
+                    if (tokenResults.length === 0) continue;
+                    
+                    const tokenInfo = tokenResults[0].token;
+                    
+                    const tokenDiv = document.createElement('div');
+                    tokenDiv.className = 'card mb-3';
+                    tokenDiv.innerHTML = `
+                        <div class="card-header bg-light">
+                            <strong>${tokenInfo.name} (${tokenInfo.symbol})</strong>
+                            <small class="text-muted d-block">Адрес: ${tokenInfo.address}</small>
+                            <small class="text-muted d-block">Оригинальный decimals: ${tokenInfo.originalDecimals}</small>
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush" id="results-${tokenAddress.substring(0, 8)}">
+                            </ul>
+                        </div>
+                    `;
+                    
+                    savedResults.appendChild(tokenDiv);
+                    
+                    const resultsList = tokenDiv.querySelector(`#results-${tokenAddress.substring(0, 8)}`);
+                    
+                    // Сортировка результатов по времени (новые в начале)
+                    tokenResults.sort((a, b) => new Date(b.test.timestamp) - new Date(a.test.timestamp));
+                    
+                    // Добавляем результаты тестов
+                    tokenResults.forEach(result => {
+                        const resultItem = document.createElement('li');
+                        resultItem.className = 'list-group-item';
+                        
+                        const resultDate = new Date(result.test.timestamp).toLocaleString();
+                        const resultClass = result.test.displayResult === 'correct' ? 'text-success' : 'text-danger';
+                        const resultText = result.test.displayResult === 'correct' ? 'Корректно' : 'Некорректно';
+                        
+                        resultItem.innerHTML = `
+                            <div>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Decimals: ${result.test.testDecimals}</strong>
+                                    <span class="${resultClass}">${resultText}</span>
+                                </div>
+                                <p class="mb-1 mt-2">${result.test.notes}</p>
+                                <small class="text-muted">${resultDate}</small>
+                            </div>
+                        `;
+                        
+                        resultsList.appendChild(resultItem);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
